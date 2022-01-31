@@ -1,8 +1,28 @@
 from bs4 import BeautifulSoup
 import requests
+import itertools
+import datetime
+import mysql.connector
+from mysql.connector import errorcode
+
+try: 
+    mydb = mysql.connector.connect(
+        host="127.0.0.1",
+        user="root",
+        passwd="password",
+        database="spopplechart"
+    )
+except mysql.connector.Error as err:
+    if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
+        print("Something is wrong with your user name or password")
+    elif err.errno == errorcode.ER_BAD_DB_ERROR:
+        print("Database does not exist")
+    else:
+        print(err)
 
 apple_links = {
-    'GLOBAL' : 'https://music.apple.com/us/playlist/top-100-global/pl.d25f5d1181894928af76c85c967f8f31',
+    # Global
+    '00' : 'https://music.apple.com/us/playlist/top-100-global/pl.d25f5d1181894928af76c85c967f8f31',
     # United States and Canada
     'US' : 'https://music.apple.com/us/playlist/top-100-usa/pl.606afcbb70264d2eb2b51d8dbcfa6a12',
     'CA' : 'https://music.apple.com/us/playlist/top-100-canada/pl.79bac9045a2540e0b195e983df8ba569',
@@ -125,39 +145,69 @@ apple_links = {
     'EG' : 'https://music.apple.com/us/playlist/top-100-egypt/pl.a0b3d0b9a2764646b59ccacdf82e3544',
     'OM' : 'https://music.apple.com/us/playlist/top-100-oman/pl.d4ca5698caf04a9f873861c3659aeeca',
 }
-for country, links in apple_links.items():
-    print(country)
-    source = requests.get(links).text
 
+spotify_links = {
+    
+}
+
+progress_counter = 0
+for country, links in apple_links.items():
+    print("Scraping data for " + country + " (" + str(progress_counter) + " out of " + str(len(apple_links)) + ")", )
+    source = requests.get(links).text
     soup = BeautifulSoup(source, 'lxml')
 
     songs = []
+    albums = []
+    artists = []
+    artworks = []
 
     count = 0
     for count, song in enumerate(soup.find_all('div', class_='songs-list-row__song-name')):
-        song.append(str(count + 1) + '. ' + song.text)
+        songs.append(str(count + 1) + '.' + song.text)
 
     # isAlbum if False
     isAlbum = False
-    index = 0
-    for index, artist_album in enumerate(soup.find_all('div', class_='songs-list__song-link-wrapper')):
-        print(index)
-        # if (isAlbum):
-        #     isAlbum = False
-        #     continue
-        # else:
-        #     originalText = (artist_album.text).split()
-        #     songs[index] = songs[index] + " by " + " ".join(originalText).replace(" ,", ",")
-        #     isAlbum = True
-    
-    print(songs[0:100])
+    for artist_album in soup.find_all('div', class_='songs-list__song-link-wrapper'):
+        if (isAlbum):
+            originalText = (artist_album.text).split()
+            albums.append(" ".join(originalText).replace(" ,", ","))
+            isAlbum = False
+            continue
+        else:
+            originalText = (artist_album.text).split()
+            artists.append(" ".join(originalText).replace(" ,", ","))
+            isAlbum = True
 
-    print()
-    print()
-    print()
-    print()
-    print()
-    print()
+    for artwork in soup.find_all('div', class_='media-artwork-v2--tracklist'):
+        if artwork.picture.source['srcset'] != "":
+            artworks.append(artwork.picture.source['srcset'].split()[0])
+        else:
+            artworks.append(artwork.picture.source['data-srcset'].split()[0])
+    # print(artists)
+    # print()
+    # print()
+    # print(albums)
+    # print()
+    # print()
+    # print(songs)
+
+    for (song,album,artist,artwork) in zip(songs,albums,artists,artworks):
+        # print(country,song.split('.')[0])
+        mycursor = mydb.cursor()
+        sql = "INSERT INTO chart_record (date,country,position, song, album, artists, artwork, spotify, applemusic) VALUE (%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        val = (datetime.datetime.now().date(),country,song.split('.', 1)[0], song.split('.', 1)[1], album, artist, artwork, 0, 1)
+
+        try:
+            mycursor.execute(sql,val)
+            mydb.commit()
+            print("[Committed]", song, 'by', artist + ' (Album:', album + ')')
+        except:
+            print("[Skipped] Duplicate record found")
+        
+
+    progress_counter += 1
+
+
 
 
 # for song in soup.find_all('div', class_='songs-list-row songs-list-row--web-preview web-preview songs-list-row--two-lines songs-list-row--song'):
