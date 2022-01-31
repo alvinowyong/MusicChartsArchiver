@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import requests
 import itertools
+import json
 import datetime
 import mysql.connector
 from mysql.connector import errorcode
@@ -146,11 +147,89 @@ apple_links = {
     'OM' : 'https://music.apple.com/us/playlist/top-100-oman/pl.d4ca5698caf04a9f873861c3659aeeca',
 }
 
-spotify_links = {
-    
+spotify_playlist_ids = {
+    # Global
+    '00' : '37i9dQZEVXbMDoHDwVN2tF',
+    # United States and Canada
+    'US' : '37i9dQZEVXbLRQDuF5jeBp',
+    'CA' : '37i9dQZEVXbKj23U1GF4IR',
+    # Latin America and the Caribbean
+    'UY' : '37i9dQZEVXbMJJi3wgRbAy',
+    'CO' : '37i9dQZEVXbOa2lmxNORXQ',
+    'NI' : '37i9dQZEVXbISk8kxnzfCq',
+    'CR' : '37i9dQZEVXbMZAjGMynsQX',
+    'PA' : '37i9dQZEVXbKypXHVwk1f0',
+    'AR' : '37i9dQZEVXbMMy2roB9myp',
+    'DO' : '37i9dQZEVXbKAbrMR8uuf7',
+    'PY' : '37i9dQZEVXbNOUPGj7tW6T',
+    'PE' : '37i9dQZEVXbJfdy5b0KP7W',
+    'EC' : '37i9dQZEVXbJlM6nvL1nD1',
+    'SV' : '37i9dQZEVXbLxoIml4MYkT',
+    'BO' : '37i9dQZEVXbJqfMFK4d691',
+    'GT' : '37i9dQZEVXbLy5tBFyQvd4',
+    'BR' : '37i9dQZEVXbMXbN3EUUhlg',
+    'HN' : '37i9dQZEVXbJp9wcIM9Eo5',
+    'MX' : '37i9dQZEVXbO3qyFxbkOE1',
+    'CL' : '37i9dQZEVXbL0GavIqMTeb',
+    # Europe, Russia, and Central Asia
+    'AD' : '37i9dQZEVXbMxjQJh4Um8T',
+    'IS' : '37i9dQZEVXbKMzVsSGQ49S',
+    'HU' : '37i9dQZEVXbNHwMxAkvmF8',
+    'PL' : '37i9dQZEVXbN6itCcaL3Tt',
+    'AT' : '37i9dQZEVXbKNHh6NIXu36',
+    'PT' : '37i9dQZEVXbKyJS56d1pgi',
+    'IE' : '37i9dQZEVXbKM896FDX8L1',
+    'RO' : '37i9dQZEVXbNZbJ6TZelCq',
+    'RU' : '37i9dQZEVXbL8l7ra5vVdB',
+    'IT' : '37i9dQZEVXbIQnj7RRhdSX',
+    'BE' : '37i9dQZEVXbJNSeeHswcKB',
+    'BG' : '37i9dQZEVXbNfM2w2mq1B8',
+    'SK' : '37i9dQZEVXbKIVTPX9a2Sb',
+    'CY' : '37i9dQZEVXbNBxnXSWuAcX',
+    'LV' : '37i9dQZEVXbJWuzDrTxbKS',
+    'ES' : '37i9dQZEVXbNFJfN1Vw8d9',
+    'CZ' : '37i9dQZEVXbIP3c3fqVrJY',
+    'LT' : '37i9dQZEVXbMx56Rdq5lwc',
+    'SE' : '37i9dQZEVXbLoATJ81JYXz',
+    'DK' : '37i9dQZEVXbL3J0k32lWnN',
+    'LU' : '37i9dQZEVXbKGcyg6TFGx6',
+    'CH' : '37i9dQZEVXbJiyhoAPEfMK',
+    'EE' : '37i9dQZEVXbLesry2Qw2xS',
+    'FI' : '37i9dQZEVXbMxcczTSoGwZ',
+    'FR' : '37i9dQZEVXbIPWwFssbupI',
+    'NL' : '37i9dQZEVXbKCF6dqVpDkS',
+    'UA' : '37i9dQZEVXbKkidEfWYRuD',
+    'DE' : '37i9dQZEVXbJiZcmkrIHGU',
+    'UK' : '37i9dQZEVXbLnolsZ8PSNw',
+    'NO' : '37i9dQZEVXbJvfa0Yxg7E7',
+    'GR' : '37i9dQZEVXbJqdarpmTJDL',
+    # Africa 
+    'NG' : '6TxKEKTt71P0a2l4MiiPMa',
+    'ZA' : '37i9dQZEVXbMH2jvi6jvjk',
+    'MA' : '37i9dQZEVXbJU9eQpX8gPT',
+    # Asia-Pacific
+    'AU' : '37i9dQZEVXbJPcfkRz0wJ0',
+    'PH' : '37i9dQZEVXbNBz9cRCSFkY',
+    'SG' : '37i9dQZEVXbK4gjvS1FjPY', 
+    'MY' : '37i9dQZEVXbJlfUljuZExa',
+    'KR' : '37i9dQZEVXbNxXF4SkHj9F',
+    'HK' : '37i9dQZEVXbLwpL8TjsxOG',
+    'TW' : '37i9dQZEVXbMnZEatlMSiu',
+    'IN' : '37i9dQZEVXbLZ52XmnySJg',
+    'TH' : '37i9dQZEVXbMnz8KIWsvf9',
+    'ID' : '37i9dQZEVXbObFQZ3JLcXt',
+    'NZ' : '37i9dQZEVXbM8SIrkERIYl',
+    'JP' : '37i9dQZEVXbKXQ4mDTEBXq',
+    'VT' : '37i9dQZEVXbLdGSmz6xilI',
+    # Middle East
+    'IL' : '37i9dQZEVXbJ6IpvItkve3',
+    'SA' : '37i9dQZEVXbLrQBcXqUtaC',
+    'TR' : '37i9dQZEVXbIVYVBNw9D5K',
+    'AE' : '37i9dQZEVXbM4UZuIrvHvA',
+    'EG' : '37i9dQZEVXbLn7RQmT5Xv2',
 }
 
-progress_counter = 0
+progress_counter = 1
 for country, links in apple_links.items():
     print("Scraping data for " + country + " (" + str(progress_counter) + " out of " + str(len(apple_links)) + ")", )
     source = requests.get(links).text
@@ -183,16 +262,8 @@ for country, links in apple_links.items():
             artworks.append(artwork.picture.source['srcset'].split()[0])
         else:
             artworks.append(artwork.picture.source['data-srcset'].split()[0])
-    # print(artists)
-    # print()
-    # print()
-    # print(albums)
-    # print()
-    # print()
-    # print(songs)
 
     for (song,album,artist,artwork) in zip(songs,albums,artists,artworks):
-        # print(country,song.split('.')[0])
         mycursor = mydb.cursor()
         sql = "INSERT INTO chart_record (date,country,position, song, album, artists, artwork, spotify, applemusic) VALUE (%s,%s,%s,%s,%s,%s,%s,%s,%s)"
         val = (datetime.datetime.now().date(),country,song.split('.', 1)[0], song.split('.', 1)[1], album, artist, artwork, 0, 1)
@@ -208,7 +279,41 @@ for country, links in apple_links.items():
     progress_counter += 1
 
 
+progress_counter = 1
+for country, playlist_id in spotify_playlist_ids.items():
+    print("Scraping data for " + country + " (" + str(progress_counter) + " out of " + str(len(spotify_playlist_ids)) + ")", )
+    source = requests.get("https://open.spotify.com/playlist/" + playlist_id).text
+    soup = BeautifulSoup(source, 'lxml')
 
+    songs = []
+    albums = []
+    artists = []
+    artworks = []
 
-# for song in soup.find_all('div', class_='songs-list-row songs-list-row--web-preview web-preview songs-list-row--two-lines songs-list-row--song'):
-#     print(song)
+    position = 1
+    for song in soup.find_all('a', class_='eWYxOj'):
+        songs.append(str(position) + "." + song.text)
+        position += 1
+
+    for artist in soup.find_all('span', class_='Row__Subtitle-sc-brbqzp-1'):
+        artists.append(artist.text)
+
+    for album in (json.loads(soup.find('script', id='initial-state').text)['entities']['items']['spotify:playlist:' + playlist_id]['tracks']['items']):
+        albums.append(album['track']['album']['name'])
+
+    for artwork in (json.loads(soup.find('script', id='initial-state').text)['entities']['items']['spotify:playlist:' + playlist_id]['tracks']['items']):
+        artworks.append(artwork['track']['album']['images'][2]['url'])
+
+    for (song, album, artist, artwork) in zip(songs, albums, artists, artworks):
+        mycursor = mydb.cursor()
+        sql = "INSERT INTO chart_record (date,country,position, song, album, artists, artwork, spotify, applemusic) VALUE (%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+        val = (datetime.datetime.now().date(), country, song.split('.', 1)[0], song.split('.', 1)[1], album, artist, artwork, 1, 0)
+
+        try:
+            mycursor.execute(sql,val)
+            mydb.commit()
+            print("[Committed]", song, 'by', artist + ' (Album:', album + ')')
+        except:
+            print("[Skipped] Duplicate record found")
+
+    progress_counter += 1
