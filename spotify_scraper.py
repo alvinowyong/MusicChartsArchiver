@@ -8,7 +8,7 @@ import json
 
 sem = threading.Semaphore()
 flag = 0
-apple_playlist = {}
+spotify_playlist = {}
 
 def scraper():
     global flag
@@ -25,7 +25,7 @@ def scraper():
             flag += 1
         sem.release()
         name = country.name.encode('ascii', 'ignore').decode('ascii')
-        url = "https://www.google.com/search?q=Top%20100:%20" +  name.replace(" ", "%20") + "%20-%20Apple%20Music"
+        url = "https://www.google.com/search?q=Top%2050%20-%20" +  name.replace(" ", "%20") + "%20|%20Spotify%20Playlist"
 
         # Perform the request
         request = urllib.request.Request(url)
@@ -56,8 +56,9 @@ def scraper():
             if i > 20:
                 break
             # Append key value into dictionary
-            if div['href'].startswith("https://music.apple.com") and div['href'].find("top-100-" + name.lower()) != -1:
-                apple_playlist[country.alpha_2] = div['href']
+            if div['href'].startswith("https://open.spotify.com/playlist") and div.text.find(name) != -1 and div.text.find("Spotify Playlist") != -1:
+                spotify_playlist[country.alpha_2] = div['href']
+                print(div['href'])
                 break                             
 
 def main():
@@ -74,5 +75,5 @@ def main():
     except:
         print("Error: unable to start thread")
 
-    with open("scraper_generated_apple_playlist.json", "w") as myfile:
-        myfile.write(json.dumps(apple_playlist, indent = 4))
+    with open("scraper_generated_spotify_playlist.json", "w") as myfile:
+        myfile.write(json.dumps(spotify_playlist, indent = 4))
