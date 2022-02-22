@@ -105,11 +105,11 @@ def spotify_playlist_scraper(spotify_links):
         for artist in soup.find_all('span', class_='Row__Subtitle-sc-brbqzp-1'):
             artists.append(artist.text)
 
-        for album in (json.loads(soup.find('script', id='initial-state').text)['entities']['items']['spotify:playlist:' + playlist_id]['tracks']['items']):
-            albums.append(album['track']['album']['name'])
+        # for album in (json.loads(soup.find('script', id='initial-state').text)['entities']['items']['spotify:playlist:' + playlist_id]['tracks']['items']):
+        #     albums.append(album['track']['album']['name'])
 
-        for artwork in (json.loads(soup.find('script', id='initial-state').text)['entities']['items']['spotify:playlist:' + playlist_id]['tracks']['items']):
-            artworks.append(artwork['track']['album']['images'][2]['url'])
+        # for artwork in (json.loads(soup.find('script', id='initial-state').text)['entities']['items']['spotify:playlist:' + playlist_id]['tracks']['items']):
+        #     artworks.append(artwork['track']['album']['images'][2]['url'])
 
         for (song, album, artist, artwork) in zip(songs, albums, artists, artworks):
             mycursor = mydb.cursor()
